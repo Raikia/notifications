@@ -64,15 +64,18 @@ class SovStructureReinforced extends AbstractDiscordNotification
             ->content('A sovereignty structure has been reinforced! :broken_heart:')
             ->embed(function (DiscordEmbed $embed) {
                 $embed->timestamp($this->notification->timestamp);
-                $embed->author('SeAT Sovereignty Health', asset('web/img/favico/apple-icon-180x180.png'));
+                $embed->author('SeAT Sovereignty Health', asset('web/img/favicon/apple-icon-180x180.png'));
 
                 $embed->field(function (DiscordEmbedField $field) {
-                    $system = MapDenormalize::find($this->notification->text['solarSystemID']);
+                    $system = MapDenormalize::firstOrNew(
+                        ['itemID' => $this->notification->text['solarSystemID']],
+                        ['itemName' => trans('web::seat.unknown'), 'security' => 0]
+                    );
 
                     $field->name('System')
                         ->value($this->zKillBoardToDiscordLink(
                             'system',
-                            $system->itemId,
+                            $system->itemID,
                             sprintf('%s (%s)', $system->itemName, number_format($system->security, 2))));
                 });
 

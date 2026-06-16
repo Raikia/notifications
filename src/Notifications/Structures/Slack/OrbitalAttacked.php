@@ -23,9 +23,12 @@
 namespace Seat\Notifications\Notifications\Structures\Slack;
 
 use Illuminate\Notifications\Messages\SlackMessage;
+use Illuminate\Support\Collection;
 use Seat\Eveapi\Models\Character\CharacterNotification;
 use Seat\Eveapi\Models\Sde\MapDenormalize;
 use Seat\Eveapi\Models\Universe\UniverseName;
+use Seat\Notifications\Contracts\ExposesRequiredUniverseIds;
+use Seat\Notifications\Jobs\Middleware\LoadRequiredUniverseIds;
 use Seat\Notifications\Notifications\AbstractSlackNotification;
 use Seat\Notifications\Traits\NotificationTools;
 
@@ -34,7 +37,7 @@ use Seat\Notifications\Traits\NotificationTools;
  *
  * @package Seat\Notifications\Notifications\Structures\Slack
  */
-class OrbitalAttacked extends AbstractSlackNotification
+class OrbitalAttacked extends AbstractSlackNotification implements ExposesRequiredUniverseIds
 {
     use NotificationTools;
 
@@ -53,26 +56,58 @@ class OrbitalAttacked extends AbstractSlackNotification
         $this->notification = $notification;
     }
 
+    public function middleware(): array
+    {
+        return array_merge(
+            parent::middleware(),
+            [new LoadRequiredUniverseIds]
+        );
+    }
+
+    public function getRequiredUniverseIds(): Collection
+    {
+        return collect([
+            $this->notification->text['aggressorID'] ?? null,
+            $this->notification->text['aggressorCorpID'] ?? null,
+            $this->notification->text['aggressorAllianceID'] ?? null,
+        ])->filter()->unique()->values();
+    }
+
     /**
      * @param  $notifiable
      * @return \Illuminate\Notifications\Messages\SlackMessage
      */
     public function toSlack($notifiable)
     {
+        $aggressor_character = UniverseName::firstOrNew(
+            ['entity_id' => $this->notification->text['aggressorID']],
+            ['category' => 'character', 'name' => trans('web::seat.unknown')]
+        );
+        $aggressor_corporation = UniverseName::firstOrNew(
+            ['entity_id' => $this->notification->text['aggressorCorpID']],
+            ['category' => 'corporation', 'name' => trans('web::seat.unknown')]
+        );
+
         return (new SlackMessage)
             ->content('A customs office is under attack!')
             ->from('SeAT Structure Monitor')
-            ->attachment(function ($attachment) {
-                $attachment->field(function ($field) {
-                    $field->title('Attacker')
+            ->attachment(function ($attachment) use ($aggressor_character, $aggressor_corporation) {
+                $attachment->field(function ($field) use ($aggressor_character) {
+                    $field->title('Character')
                         ->content(
                             $this->zKillBoardToSlackLink(
+                                'character',
+                                $this->notification->text['aggressorID'],
+                                $aggressor_character->name
+                            ));
+                    })
+                    ->field(function ($field) use ($aggressor_corporation) {
+                        $field->title('Corporation')
+                            ->content(
+                                $this->zKillBoardToSlackLink(
                                 'corporation',
                                 $this->notification->text['aggressorCorpID'],
-                                UniverseName::firstOrNew(
-                                    ['entity_id' => $this->notification->text['aggressorCorpID']],
-                                    ['category' => 'corporation', 'name' => trans('web::seat.unknown')])
-                                ->name
+                                $aggressor_corporation->name
                             ));
                     })
                     ->field(function ($field) {

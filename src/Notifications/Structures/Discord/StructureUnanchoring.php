@@ -54,7 +54,7 @@ class StructureUnanchoring extends AbstractDiscordNotification
             ->embed(function (DiscordEmbed $embed) {
                 $embed->timestamp($this->notification->timestamp);
                 $embed->color(DiscordMessage::INFO);
-                $embed->author('SeAT Structure Monitor', asset('web/img/favico/apple-icon-180x180.png'));
+                $embed->author('SeAT Structure Monitor', asset('web/img/favicon/apple-icon-180x180.png'));
 
                 $embed->field(function (DiscordEmbedField $field) {
                     $system = MapDenormalize::firstOrNew(
@@ -96,8 +96,9 @@ class StructureUnanchoring extends AbstractDiscordNotification
             })
             ->embed(function (DiscordEmbed $embed) {
                 $embed->field(function (DiscordEmbedField $field) {
-                    $field->name('Remaining Time')
-                        ->value($this->notification->text['timeLeft']);
+                    $field->name('Unanchors At (UTC)')
+                        ->value($this->eveDurationToDateTimeString($this->notification->text['timeLeft'], $this->notification->timestamp))
+                        ->long();
                 });
             })
             ->warning();

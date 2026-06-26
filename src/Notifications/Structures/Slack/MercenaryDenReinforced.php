@@ -84,14 +84,14 @@ class MercenaryDenReinforced extends AbstractSlackNotification implements Expose
                 if (array_key_exists('aggressorCorporationName', $this->notification->text)) {
                     $attachment->field(function ($field) {
                         $field->title('Corporation')
-                            ->content($this->notification->text['aggressorCorporationName']);
+                            ->content(clean_ccp_html($this->notification->text['aggressorCorporationName']));
                     });
                 }
 
                 if (array_key_exists('aggressorAllianceName', $this->notification->text)) {
                     $attachment->field(function ($field) {
                         $field->title('Alliance')
-                            ->content($this->notification->text['aggressorAllianceName']);
+                            ->content(clean_ccp_html($this->notification->text['aggressorAllianceName']));
                     });
                 }
 

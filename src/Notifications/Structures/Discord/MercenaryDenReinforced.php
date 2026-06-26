@@ -90,14 +90,14 @@ class MercenaryDenReinforced extends AbstractDiscordNotification implements Expo
                 if (array_key_exists('aggressorCorporationName', $this->notification->text)) {
                     $embed->field(function (DiscordEmbedField $field) {
                         $field->name('Corporation')
-                            ->value($this->notification->text['aggressorCorporationName']);
+                            ->value(clean_ccp_html($this->notification->text['aggressorCorporationName']));
                     });
                 }
 
                 if (array_key_exists('aggressorAllianceName', $this->notification->text)) {
                     $embed->field(function (DiscordEmbedField $field) {
                         $field->name('Alliance')
-                            ->value($this->notification->text['aggressorAllianceName']);
+                            ->value(clean_ccp_html($this->notification->text['aggressorAllianceName']));
                     });
                 }
 
